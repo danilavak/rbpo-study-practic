@@ -9,8 +9,6 @@ stages:
 
 build:
   stage: build
-  tags:
-    - saas-linux-small-amd64
   image: eclipse-temurin:21-jdk
   script:
     - chmod +x ./mvnw
@@ -21,12 +19,10 @@ build:
 
 sast:
   stage: test
-  tags:
-    - saas-linux-small-amd64
+  image: python:3.12
   script:
-    - py -m pip install --user semgrep
-    - export PATH="/c/Users/danil/AppData/Roaming/Python/Python312/Scripts:$PATH"
-    - semgrep.exe scan --metrics=off --config semgrep/rules.yml --gitlab-sast --gitlab-sast-output gl-sast-report.json . || true
+    - python -m pip install semgrep
+    - semgrep scan --metrics=off --config semgrep/rules.yml --gitlab-sast --gitlab-sast-output gl-sast-report.json . || true
   artifacts:
     when: always
     reports:
@@ -36,11 +32,10 @@ sast:
 
 sca:
   stage: test
-  tags:
-    - saas-linux-small-amd64
+  image: eclipse-temurin:21-jdk
   script:
     - chmod +x ./mvnw
-    - ./mvnw -B dependency-check:check -DautoUpdate=false -DdataDirectory=C:/Users/danil/.m2/repository/org/owasp/dependency-check-data/11.0
+    - ./mvnw -B dependency-check:check
     - if [ ! -f target/dependency-check-report.html ]; then printf '<html><body>Dependency-Check report was not generated.</body></html>' > target/dependency-check-report.html; fi
   artifacts:
     when: always
@@ -49,8 +44,6 @@ sca:
 
 dast_baseline:
   stage: test
-  tags:
-    - saas-linux-small-amd64
   image:
     name: zaproxy/zap-stable
     entrypoint: [""]
@@ -77,8 +70,6 @@ dast_baseline:
 
 dast_api:
   stage: test
-  tags:
-    - saas-linux-small-amd64
   image:
     name: zaproxy/zap-stable
     entrypoint: [""]
