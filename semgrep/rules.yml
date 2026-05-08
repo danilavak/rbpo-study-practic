@@ -1,0 +1,79 @@
+rules:
+  - id: java-password-logged
+    message: Password must not be written to application logs.
+    severity: ERROR
+    languages:
+      - java
+    metadata:
+      category: security
+      cwe:
+        - "CWE-532: Insertion of Sensitive Information into Log File"
+      owasp:
+        - A09:2021
+    patterns:
+      - pattern-either:
+          - pattern: log.info(..., $PASSWORD, ...)
+          - pattern: log.warn(..., $PASSWORD, ...)
+          - pattern: log.error(..., $PASSWORD, ...)
+      - metavariable-regex:
+          metavariable: $PASSWORD
+          regex: (?i).*(password|passwd|pwd|secret).*
+
+  - id: java-plaintext-password-comparison
+    message: Passwords must not be compared in plaintext.
+    severity: ERROR
+    languages:
+      - java
+    metadata:
+      category: security
+      cwe:
+        - "CWE-256: Plaintext Storage of a Password"
+      owasp:
+        - A02:2021
+    pattern: $USER.getPassword().equals($PASSWORD)
+
+  - id: java-open-redirect-registers-plaintext-password
+    message: User registration stores plaintext password data without hashing.
+    severity: WARNING
+    languages:
+      - java
+    metadata:
+      category: security
+      cwe:
+        - "CWE-256: Plaintext Storage of a Password"
+      owasp:
+        - A02:2021
+    pattern: users.save(new User(null, $USERNAME, $PASSWORD, $ROLE))
+
+  - id: java-ssrf-resttemplate-user-input
+    message: Request parameter is used as an outbound URL without validation.
+    severity: ERROR
+    languages:
+      - java
+    metadata:
+      category: security
+      cwe:
+        - "CWE-918: Server-Side Request Forgery (SSRF)"
+      owasp:
+        - A10:2021
+    patterns:
+      - pattern-inside: |
+          public String proxy(..., @RequestParam("targetUrl") String $URL, ...) {
+            ...
+          }
+      - pattern: $REST.getForObject($URL, String.class)
+
+  - id: java-cors-wildcard-origin
+    message: CORS wildcard origin allows requests from any origin.
+    severity: WARNING
+    languages:
+      - java
+    metadata:
+      category: security
+      cwe:
+        - "CWE-942: Permissive Cross-domain Policy with Untrusted Domains"
+      owasp:
+        - A05:2021
+    pattern-either:
+      - pattern: $REGISTRY.allowedOrigins("*")
+      - pattern: '@CrossOrigin(origins = "*")'
