@@ -1,13 +1,10 @@
-workflow:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - when: never
-
 stages:
   - build
 
 build:
   stage: build
+  only:
+    - merge_requests
   tags:
     - saas-linux-small-amd64
   image: eclipse-temurin:21-jdk
