@@ -1,17 +1,21 @@
 package ru.mtuci.coursemanagement.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
+    @Value("${app.security.allowed-origins:http://localhost:8080}")
+    private String[] allowedOrigins;
+
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedMethods("*")
-                .allowedOrigins("*")
-                .allowedHeaders("*");
+                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedOrigins(allowedOrigins)
+                .allowedHeaders("Content-Type", "Authorization");
 
     }
 }

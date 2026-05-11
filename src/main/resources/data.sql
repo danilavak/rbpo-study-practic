@@ -1,9 +1,9 @@
 -- Инициализация демо-данных
 -- Пользователи
 INSERT INTO USERS (id, username, password, role)
-VALUES (1, 'teacher', 'password', 'TEACHER');
+VALUES (1, 'teacher', 'e816c271b39861964a44697a98cc58fa438a6773efdcfda8a05242f6287f18c5', 'TEACHER');
 INSERT INTO USERS (id, username, password, role)
-VALUES (2, 'student', 'password', 'STUDENT');
+VALUES (2, 'student', 'e816c271b39861964a44697a98cc58fa438a6773efdcfda8a05242f6287f18c5', 'STUDENT');
 ALTER TABLE USERS ALTER COLUMN ID RESTART WITH 3;
 
 -- Студенты
