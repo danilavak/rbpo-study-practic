@@ -9,7 +9,6 @@ variables:
 default:
   before_script:
     - export PATH="$JAVA_HOME/bin:$PATH"
-  resource_group: rbpo-study-practic
 
 stages:
   - verify
@@ -20,6 +19,7 @@ stages:
 
 secret_scan:
   stage: verify
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   script:
@@ -34,6 +34,7 @@ secret_scan:
 
 container_scan:
   stage: container
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   needs:
@@ -50,6 +51,7 @@ container_scan:
 
 publish_container:
   stage: publish
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   needs:
@@ -63,6 +65,7 @@ publish_container:
 
 build:
   stage: build
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   needs:
@@ -78,6 +81,7 @@ build:
 
 sast:
   stage: test
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   script:
@@ -94,6 +98,7 @@ sast:
 
 sca:
   stage: test
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   image: eclipse-temurin:21-jdk
@@ -108,6 +113,7 @@ sca:
 
 dast_baseline:
   stage: test
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   needs:
@@ -137,6 +143,7 @@ dast_baseline:
 
 dast_api:
   stage: test
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   needs:
@@ -166,6 +173,7 @@ dast_api:
 
 fuzzing:
   stage: test
+  resource_group: rbpo-study-practic
   tags:
     - saas-linux-small-amd64
   needs:
