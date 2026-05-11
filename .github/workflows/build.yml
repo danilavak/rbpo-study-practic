@@ -231,3 +231,58 @@ jobs:
           if [ -f target/zap/app.pid ]; then
             kill $(cat target/zap/app.pid) || true
           fi
+
+  fuzzing:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: course-management-jar
+          path: target
+
+      - name: Download ffuf
+        run: |
+          mkdir -p target/fuzzing
+          curl -fsSL -o target/fuzzing/ffuf.tar.gz https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_linux_amd64.tar.gz
+          tar -xzf target/fuzzing/ffuf.tar.gz -C target/fuzzing
+          chmod +x target/fuzzing/ffuf
+
+      - name: Start application
+        run: |
+          java -jar target/*.jar > target/fuzzing/app.log 2>&1 &
+          echo $! > target/fuzzing/app.pid
+          sleep 30
+          curl --fail http://127.0.0.1:8080/actuator/health
+
+      - name: Run web fuzzing
+        run: |
+          target/fuzzing/ffuf -w fuzzing/paths.txt -u http://127.0.0.1:8080/FUZZ -mc all -fc 404 -maxtime 60 -timeout 5 -o target/fuzzing/ffuf-report.json -of json -debug-log target/fuzzing/ffuf-debug.log || true
+
+      - name: Upload fuzzing report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffuf-report
+          path: |
+            target/fuzzing/ffuf-report.json
+            target/fuzzing/ffuf-debug.log
+            target/fuzzing/app.log
+
+      - name: Stop application
+        if: always()
+        run: |
+          if [ -f target/fuzzing/app.pid ]; then
+            kill $(cat target/fuzzing/app.pid) || true
+          fi
