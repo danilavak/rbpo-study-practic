@@ -132,7 +132,7 @@ dast_baseline:
     - cp /c/GitLab-Runner/zap/reports/baseline-test.md target/zap/zap-baseline-report.md
     - cp /c/GitLab-Runner/zap/reports/baseline-test.json target/zap/zap-baseline-report.json
   after_script:
-    - if [ -f target/zap/app.pid ]; then kill "$(cat target/zap/app.pid)" || true; fi
+    - cmd.exe /c taskkill /F /IM java.exe || true
   artifacts:
     when: always
     paths:
@@ -162,7 +162,7 @@ dast_api:
     - cp /c/GitLab-Runner/zap/reports/api-test.md target/zap/zap-api-report.md
     - cp /c/GitLab-Runner/zap/reports/api-test.json target/zap/zap-api-report.json
   after_script:
-    - if [ -f target/zap/app.pid ]; then kill "$(cat target/zap/app.pid)" || true; fi
+    - cmd.exe /c taskkill /F /IM java.exe || true
   artifacts:
     when: always
     paths:
@@ -190,7 +190,7 @@ fuzzing:
     - curl --fail --silent http://127.0.0.1:8080/actuator/health > /dev/null
     - ./target/fuzzing/ffuf-bin/ffuf.exe -w fuzzing/paths.txt -u http://127.0.0.1:8080/FUZZ -mc all -fc 404 -maxtime 60 -timeout 5 -o target/fuzzing/ffuf-report.json -of json -debug-log target/fuzzing/ffuf-debug.log || true
   after_script:
-    - if [ -f target/fuzzing/app.pid ]; then kill "$(cat target/fuzzing/app.pid)" || true; fi
+    - cmd.exe /c taskkill /F /IM java.exe || true
   artifacts:
     when: always
     paths:
