@@ -113,3 +113,29 @@ dast_api:
       - target/zap/zap-api-report.md
       - target/zap/zap-api-report.json
       - target/zap/app.log
+
+fuzzing:
+  stage: test
+  tags:
+    - saas-linux-small-amd64
+  needs:
+    - job: build
+      artifacts: true
+  script:
+    - mkdir -p target/fuzzing
+    - curl -fsSL -o target/fuzzing/ffuf.zip https://github.com/ffuf/ffuf/releases/download/v2.1.0/ffuf_2.1.0_windows_amd64.zip
+    - py -c "import zipfile; zipfile.ZipFile(r'target/fuzzing/ffuf.zip').extractall(r'target/fuzzing/ffuf-bin')"
+    - trap 'if [ -f target/fuzzing/app.pid ]; then kill "$(cat target/fuzzing/app.pid)" || true; fi' EXIT
+    - java -jar target/*.jar > target/fuzzing/app.log 2>&1 &
+    - echo $! > target/fuzzing/app.pid
+    - sleep 30
+    - curl --fail --silent http://127.0.0.1:8080/actuator/health > /dev/null
+    - ./target/fuzzing/ffuf-bin/ffuf.exe -w fuzzing/paths.txt -u http://127.0.0.1:8080/FUZZ -mc all -fc 404 -maxtime 60 -timeout 5 -o target/fuzzing/ffuf-report.json -of json -debug-log target/fuzzing/ffuf-debug.log || true
+  after_script:
+    - if [ -f target/fuzzing/app.pid ]; then kill "$(cat target/fuzzing/app.pid)" || true; fi
+  artifacts:
+    when: always
+    paths:
+      - target/fuzzing/ffuf-report.json
+      - target/fuzzing/ffuf-debug.log
+      - target/fuzzing/app.log
