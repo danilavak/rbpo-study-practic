@@ -12,6 +12,7 @@ default:
 
 stages:
   - verify
+  - container
   - build
   - test
 
@@ -29,12 +30,40 @@ secret_scan:
     paths:
       - target/secrets/gitleaks-report.json
 
+container_scan:
+  stage: container
+  tags:
+    - saas-linux-small-amd64
+  needs:
+    - secret_scan
+  script:
+    - mkdir -p target/container
+    - curl -fsSL -o target/container/trivy.zip https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_windows-64bit.zip
+    - py -c "import zipfile; zipfile.ZipFile(r'target/container/trivy.zip').extractall(r'target/container/trivy-bin')"
+    - ./target/container/trivy-bin/trivy.exe config --severity HIGH,CRITICAL --exit-code 1 --format json --output target/container/trivy-report.json Dockerfile
+  artifacts:
+    when: always
+    paths:
+      - target/container/trivy-report.json
+
+publish_container:
+  stage: container
+  tags:
+    - saas-linux-small-amd64
+  needs:
+    - container_scan
+  script:
+    - chmod +x ./mvnw
+    - export IMAGE_NAME="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - ./mvnw -B -DskipTests jib:build -Djib.containerizeMode=packaged -Djib.to.image="$IMAGE_NAME" -Djib.to.auth.username="$CI_REGISTRY_USER" -Djib.to.auth.password="$CI_REGISTRY_PASSWORD"
+
 build:
   stage: build
   tags:
     - saas-linux-small-amd64
   needs:
     - secret_scan
+    - container_scan
   image: eclipse-temurin:21-jdk
   script:
     - chmod +x ./mvnw
