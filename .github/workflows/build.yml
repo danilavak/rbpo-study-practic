@@ -111,16 +111,10 @@ jobs:
       - name: Prepare Maven Wrapper
         run: chmod +x ./mvnw
 
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: course-management-jar
-          path: target
-
       - name: Publish image to GHCR
         run: |
           IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/rbpo-study-practic:${{ github.event.pull_request.number }}-${GITHUB_SHA::7}
-          ./mvnw -B -DskipTests jib:build -Djib.containerizingMode=packaged -Djib.to.image=$IMAGE_NAME -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
+          ./mvnw -B -DskipTests package jib:build -Djib.containerizingMode=packaged -Djib.to.image=$IMAGE_NAME -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
 
   sast:
     runs-on: ubuntu-latest

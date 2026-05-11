@@ -53,12 +53,11 @@ publish_container:
     - saas-linux-small-amd64
   needs:
     - container_scan
-    - job: build
-      artifacts: true
+    - build
   script:
     - chmod +x ./mvnw
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
-    - ./mvnw -B -DskipTests jib:build -Djib.containerizingMode=packaged -Djib.to.image="$IMAGE_NAME" -Djib.to.auth.username="$CI_REGISTRY_USER" -Djib.to.auth.password="$CI_REGISTRY_PASSWORD"
+    - ./mvnw -B -DskipTests package jib:build -Djib.containerizingMode=packaged -Djib.to.image="$IMAGE_NAME" -Djib.to.auth.username="$CI_REGISTRY_USER" -Djib.to.auth.password="$CI_REGISTRY_PASSWORD"
 
 build:
   stage: build
