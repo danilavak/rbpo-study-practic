@@ -127,7 +127,7 @@ dast_baseline:
     - echo $! > target/zap/app.pid
     - sleep 30
     - curl --fail --silent http://localhost:8080/actuator/health > /dev/null
-    - cmd.exe /c "\"C:\GitLab-Runner\zap\ZAP_2.16.1\zap.bat\" -cmd -autorun \"C:\GitLab-Runner\zap\baseline-plan.yaml\""
+    - /c/Users/danil/.jdks/openjdk-25/bin/java.exe -Xmx512m -jar /c/GitLab-Runner/zap/ZAP_2.16.1/zap-2.16.1.jar -cmd -autorun /c/GitLab-Runner/zap/baseline-plan.yaml
     - cp /c/GitLab-Runner/zap/reports/baseline-test.html target/zap/zap-baseline-report.html
     - cp /c/GitLab-Runner/zap/reports/baseline-test.md target/zap/zap-baseline-report.md
     - cp /c/GitLab-Runner/zap/reports/baseline-test.json target/zap/zap-baseline-report.json
@@ -157,7 +157,7 @@ dast_api:
     - echo $! > target/zap/app.pid
     - sleep 30
     - curl --fail --silent http://localhost:8080/actuator/health > /dev/null
-    - cmd.exe /c "\"C:\GitLab-Runner\zap\ZAP_2.16.1\zap.bat\" -cmd -autorun \"C:\GitLab-Runner\zap\api-plan.yaml\""
+    - /c/Users/danil/.jdks/openjdk-25/bin/java.exe -Xmx512m -jar /c/GitLab-Runner/zap/ZAP_2.16.1/zap-2.16.1.jar -cmd -autorun /c/GitLab-Runner/zap/api-plan.yaml
     - cp /c/GitLab-Runner/zap/reports/api-test.html target/zap/zap-api-report.html
     - cp /c/GitLab-Runner/zap/reports/api-test.md target/zap/zap-api-report.md
     - cp /c/GitLab-Runner/zap/reports/api-test.json target/zap/zap-api-report.json
