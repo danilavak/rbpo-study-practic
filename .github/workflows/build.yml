@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   security-events: write
+  packages: write
 
 jobs:
   secret_scan:
@@ -35,9 +36,43 @@ jobs:
           name: gitleaks-report
           path: target/secrets/gitleaks-report.json
 
-  build:
+  container_scan:
     runs-on: ubuntu-latest
     needs: secret_scan
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download Trivy
+        run: |
+          mkdir -p target/container/trivy
+          curl -fsSL -o target/container/trivy/trivy.tar.gz https://github.com/aquasecurity/trivy/releases/download/v0.70.0/trivy_0.70.0_Linux-64bit.tar.gz
+          tar -xzf target/container/trivy/trivy.tar.gz -C target/container/trivy
+          chmod +x target/container/trivy/trivy
+
+      - name: Scan Dockerfile
+        run: |
+          target/container/trivy/trivy config --severity HIGH,CRITICAL --exit-code 1 --format json --output target/container/trivy-report.json Dockerfile
+
+      - name: Upload container scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: target/container/trivy-report.json
+
+  build:
+    runs-on: ubuntu-latest
+    needs:
+      - secret_scan
+      - container_scan
     container:
       image: eclipse-temurin:21-jdk
 
@@ -56,6 +91,30 @@ jobs:
         with:
           name: course-management-jar
           path: ./target/*.jar
+
+  publish_container:
+    runs-on: ubuntu-latest
+    needs:
+      - container_scan
+      - build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Prepare Maven Wrapper
+        run: chmod +x ./mvnw
+
+      - name: Publish image to GHCR
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/rbpo-study-practic:${{ github.event.pull_request.number }}-${GITHUB_SHA::7}
+          ./mvnw -B -DskipTests package jib:build -Djib.containerizingMode=packaged -Djib.to.image=$IMAGE_NAME -Djib.to.auth.username=${{ github.actor }} -Djib.to.auth.password=${{ secrets.GITHUB_TOKEN }}
 
   sast:
     runs-on: ubuntu-latest
