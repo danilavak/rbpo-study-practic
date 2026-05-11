@@ -14,6 +14,7 @@ stages:
   - verify
   - container
   - build
+  - publish
   - test
 
 secret_scan:
@@ -47,15 +48,17 @@ container_scan:
       - target/container/trivy-report.json
 
 publish_container:
-  stage: container
+  stage: publish
   tags:
     - saas-linux-small-amd64
   needs:
     - container_scan
+    - job: build
+      artifacts: true
   script:
     - chmod +x ./mvnw
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
-    - ./mvnw -B -DskipTests jib:build -Djib.containerizeMode=packaged -Djib.to.image="$IMAGE_NAME" -Djib.to.auth.username="$CI_REGISTRY_USER" -Djib.to.auth.password="$CI_REGISTRY_PASSWORD"
+    - ./mvnw -B -DskipTests jib:build -Djib.containerizingMode=packaged -Djib.to.image="$IMAGE_NAME" -Djib.to.auth.username="$CI_REGISTRY_USER" -Djib.to.auth.password="$CI_REGISTRY_PASSWORD"
 
 build:
   stage: build
