@@ -11,13 +11,30 @@ default:
     - export PATH="$JAVA_HOME/bin:$PATH"
 
 stages:
+  - verify
   - build
   - test
+
+secret_scan:
+  stage: verify
+  tags:
+    - saas-linux-small-amd64
+  script:
+    - mkdir -p target/secrets
+    - curl -fsSL -o target/secrets/gitleaks.zip https://github.com/gitleaks/gitleaks/releases/download/v8.24.2/gitleaks_8.24.2_windows_x64.zip
+    - py -c "import zipfile; zipfile.ZipFile(r'target/secrets/gitleaks.zip').extractall(r'target/secrets/gitleaks-bin')"
+    - ./target/secrets/gitleaks-bin/gitleaks.exe git . --report-format json --report-path target/secrets/gitleaks-report.json --exit-code 1
+  artifacts:
+    when: always
+    paths:
+      - target/secrets/gitleaks-report.json
 
 build:
   stage: build
   tags:
     - saas-linux-small-amd64
+  needs:
+    - secret_scan
   image: eclipse-temurin:21-jdk
   script:
     - chmod +x ./mvnw
