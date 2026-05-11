@@ -9,6 +9,7 @@ variables:
 default:
   before_script:
     - export PATH="$JAVA_HOME/bin:$PATH"
+  resource_group: rbpo-study-practic
 
 stages:
   - verify
@@ -53,7 +54,8 @@ publish_container:
     - saas-linux-small-amd64
   needs:
     - container_scan
-    - build
+    - job: build
+      artifacts: false
   script:
     - chmod +x ./mvnw
     - export IMAGE_NAME="$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
@@ -108,21 +110,21 @@ dast_baseline:
   stage: test
   tags:
     - saas-linux-small-amd64
-  image:
-    name: zaproxy/zap-stable
-    entrypoint: [""]
   needs:
     - job: build
       artifacts: true
   script:
     - mkdir -p target/zap .zap
-    - touch .zap/rules.tsv
+    - rm -f /c/GitLab-Runner/zap/reports/baseline-test.*
     - trap 'if [ -f target/zap/app.pid ]; then kill "$(cat target/zap/app.pid)" || true; fi' EXIT
     - java -jar target/*.jar > target/zap/app.log 2>&1 &
     - echo $! > target/zap/app.pid
     - sleep 30
     - curl --fail --silent http://localhost:8080/actuator/health > /dev/null
-    - zap-baseline.py -t http://localhost:8080 -c .zap/rules.tsv -r target/zap/zap-baseline-report.html -w target/zap/zap-baseline-report.md -J target/zap/zap-baseline-report.json || true
+    - cmd.exe /c C:\GitLab-Runner\zap\ZAP_2.16.1\zap.bat -cmd -autorun C:\GitLab-Runner\zap\baseline-plan.yaml
+    - cp /c/GitLab-Runner/zap/reports/baseline-test.html target/zap/zap-baseline-report.html
+    - cp /c/GitLab-Runner/zap/reports/baseline-test.md target/zap/zap-baseline-report.md
+    - cp /c/GitLab-Runner/zap/reports/baseline-test.json target/zap/zap-baseline-report.json
   after_script:
     - if [ -f target/zap/app.pid ]; then kill "$(cat target/zap/app.pid)" || true; fi
   artifacts:
@@ -137,21 +139,21 @@ dast_api:
   stage: test
   tags:
     - saas-linux-small-amd64
-  image:
-    name: zaproxy/zap-stable
-    entrypoint: [""]
   needs:
     - job: build
       artifacts: true
   script:
     - mkdir -p target/zap .zap
-    - touch .zap/rules.tsv
+    - rm -f /c/GitLab-Runner/zap/reports/api-test.*
     - trap 'if [ -f target/zap/app.pid ]; then kill "$(cat target/zap/app.pid)" || true; fi' EXIT
     - java -jar target/*.jar > target/zap/app.log 2>&1 &
     - echo $! > target/zap/app.pid
     - sleep 30
     - curl --fail --silent http://localhost:8080/actuator/health > /dev/null
-    - zap-api-scan.py -t http://localhost:8080/v3/api-docs -f openapi -c .zap/rules.tsv -r target/zap/zap-api-report.html -w target/zap/zap-api-report.md -J target/zap/zap-api-report.json || true
+    - cmd.exe /c C:\GitLab-Runner\zap\ZAP_2.16.1\zap.bat -cmd -autorun C:\GitLab-Runner\zap\api-plan.yaml
+    - cp /c/GitLab-Runner/zap/reports/api-test.html target/zap/zap-api-report.html
+    - cp /c/GitLab-Runner/zap/reports/api-test.md target/zap/zap-api-report.md
+    - cp /c/GitLab-Runner/zap/reports/api-test.json target/zap/zap-api-report.json
   after_script:
     - if [ -f target/zap/app.pid ]; then kill "$(cat target/zap/app.pid)" || true; fi
   artifacts:
